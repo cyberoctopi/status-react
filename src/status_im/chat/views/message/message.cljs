@@ -5,15 +5,15 @@
             [reagent.core :as r]
             [status-im.i18n :refer [message-status-label]]
             [status-im.ui.components.react :refer [view
-                                                text
-                                                image
-                                                icon
-                                                animated-view
-                                                touchable-without-feedback
-                                                touchable-highlight
-                                                autolink
-                                                get-dimensions
-                                                dismiss-keyboard!]]
+                                                   text
+                                                   image
+                                                   icon
+                                                   animated-view
+                                                   touchable-without-feedback
+                                                   touchable-highlight
+                                                   autolink
+                                                   get-dimensions
+                                                   dismiss-keyboard!]]
             [status-im.ui.components.animation :as anim]
             [status-im.ui.components.list-selection :refer [share share-or-open-map]]
             [status-im.chat.constants :as chat-consts]
@@ -121,13 +121,12 @@
 
 (defview message-content-command
   [{:keys [message-id content content-type chat-id to from outgoing] :as message}]
-  (letsubs [commands [:get-commands-for-chat chat-id]
+  (letsubs [command [:get-command (:content-command-ref content)]
             current-chat-id [:get-current-chat-id]
             contact-chat [:get-in [:chats (if outgoing to from)]]
-            preview [:get-message-preview message-id]]
-    (let [{:keys [command params]} (commands/replace-name-with-request message commands)
-          {:keys     [name type]
-           icon-path :icon} command]
+            preview [:get-message-preview message-id]] 
+    (let [{:keys     [name type]
+           icon-path :icon} command] 
       [view st/content-command-view
        (when (:color command)
          [view st/command-container
@@ -140,7 +139,7 @@
           [icon icon-path st/command-image]])
        [command-preview {:command         (:name command)
                          :content-type    content-type
-                         :params          params
+                         :params          (:params content)
                          :outgoing?       outgoing
                          :preview         preview
                          :contact-chat    contact-chat
@@ -162,10 +161,10 @@
 (defn get-style [string]
   (->> replacements
        (into [] (comp
-                  (map first)
-                  (map #(vector % (re-pattern %)))
-                  (drop-while (fn [[_ regx]] (not (re-matches regx string))))
-                  (take 1)))
+                 (map first)
+                 (map #(vector % (re-pattern %)))
+                 (drop-while (fn [[_ regx]] (not (re-matches regx string))))
+                 (take 1)))
        ffirst
        replacements))
 
@@ -177,13 +176,13 @@
                           [nil]
                           general-text)
           styled-text   (vec (map-indexed
-                               (fn [idx string]
-                                 (let [style (get-style string)]
-                                   [text
-                                    {:key   (str idx "_" string)
-                                     :style style}
-                                    (subs string 1 (dec (count string)))]))
-                               (re-seq regx string)))
+                              (fn [idx string]
+                                (let [style (get-style string)]
+                                  [text
+                                   {:key   (str idx "_" string)
+                                    :style style}
+                                   (subs string 1 (dec (count string)))]))
+                              (re-seq regx string)))
           styled-text'  (if (> (count general-text)
                                (count styled-text))
                           (conj styled-text nil)
@@ -261,9 +260,9 @@
        [text {:style st/delivery-text
               :font  :default}
         (message-status-label
-          (if seen-by-everyone?
-            :seen-by-everyone
-            status))]]
+         (if seen-by-everyone?
+           :seen-by-everyone
+           status))]]
       [touchable-highlight
        {:on-press (fn []
                     (dispatch [:show-message-details {:message-status status
@@ -285,7 +284,7 @@
 (defview message-delivery-status
   [{:keys [message-id chat-id message-status user-statuses content]}]
   [app-db-message-status-value [:get-in [:message-data :statuses message-id :status]]]
-  (let [delivery-status (get-in user-statuses [chat-id :status]) 
+  (let [delivery-status (get-in user-statuses [chat-id :status])
         status          (cond (and (not (console/commands-with-delivery-status (:command content)))
                                    (cu/console? chat-id))
                               :seen

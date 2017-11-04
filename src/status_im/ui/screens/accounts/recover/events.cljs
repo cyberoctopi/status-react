@@ -4,6 +4,7 @@
 
     [re-frame.core :refer [reg-fx inject-cofx dispatch]]
     [status-im.native-module.core :as status]
+    [status-im.ui.screens.accounts.events :as accounts-events]
     [status-im.utils.types :refer [json->clj]]
     [status-im.utils.identicon :refer [identicon]]
     [taoensso.timbre :as log]
@@ -43,9 +44,8 @@
                    :signing-phrase      phrase}]
       (log/debug "account-recovered")
       (when-not (str/blank? public-key)
-        {:db         (update db :accounts/recover assoc :passphrase "" :password "")
-         :dispatch-n [[:add-account account]
-                      [:navigate-to-clean :accounts]]}))))
+        (-> (accounts-events/add-account db account)
+            (assoc :dispatch [:navigate-to-clean :accounts]))))))
 
 (register-handler-fx
   :recover-account

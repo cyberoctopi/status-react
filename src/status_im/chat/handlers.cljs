@@ -73,21 +73,6 @@
    remove-pending-messages!
    delete-chat!))
 
-(register-handler
-  :check-and-open-dapp!
-  (u/side-effect!
-    (fn [{:keys [current-chat-id global-commands]
-          :contacts/keys [contacts]}]
-      (let [dapp-url (get-in contacts [current-chat-id :dapp-url])]
-        (when dapp-url
-          (am/go
-            (dispatch [:select-chat-input-command
-                       (assoc (first (:browse global-commands)) :prefill [dapp-url])
-                       nil
-                       true])
-            (a/<! (a/timeout 100))
-            (dispatch [:send-current-message])))))))
-
 (register-handler :update-group-message
   (u/side-effect!
    (fn [{:keys [current-public-key web3 chats]}

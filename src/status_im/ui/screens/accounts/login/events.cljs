@@ -1,14 +1,15 @@
 (ns status-im.ui.screens.accounts.login.events
   (:require
-    status-im.ui.screens.accounts.login.navigation
+   status-im.ui.screens.accounts.login.navigation
 
-    [re-frame.core :refer [dispatch reg-fx]]
-    [status-im.utils.handlers :refer [register-handler-db register-handler-fx]]
-    [taoensso.timbre :as log]
-    [status-im.utils.types :refer [json->clj]]
-    [status-im.data-store.core :as data-store]
-    [status-im.native-module.core :as status]
-    [status-im.constants :refer [console-chat-id]]))
+   [re-frame.core :refer [dispatch reg-fx]]
+   [status-im.utils.handlers :refer [register-handler-db register-handler-fx]]
+   [taoensso.timbre :as log]
+   [status-im.chat.sign-up :as sign-up]
+   [status-im.utils.types :refer [json->clj]]
+   [status-im.data-store.core :as data-store]
+   [status-im.native-module.core :as status]
+   [status-im.constants :refer [console-chat-id]]))
 
 ;;;; FX
 
@@ -51,8 +52,8 @@
   ::login-account
   (fn [{db :db} [_ address password]]
     (wrap-with-login-account-fx
-      (assoc db :node/after-start nil)
-      address password)))
+     (assoc db :node/after-start nil)
+     address password)))
 
 (defn get-network-by-address [db address]
   (let [accounts (get db :accounts/accounts)
@@ -65,14 +66,14 @@
   (let [{:keys [network config]} (get-network-by-address db address)]
     {:initialize-geth-fx config
      :db                 (assoc db :network network
-                                   :node/after-start [::login-account address password])}))
+                                :node/after-start [::login-account address password])}))
 
 (register-handler-fx
   ::start-node
   (fn [{db :db} [_ address password]]
     (wrap-with-initialize-geth-fx
-      (assoc db :node/after-stop nil)
-      address password)))
+     (assoc db :node/after-stop nil)
+     address password)))
 
 (defn wrap-with-stop-node-fx [db address password]
   {:db         (assoc db :node/after-stop [::start-node address password])
@@ -105,13 +106,13 @@
           db'     (assoc-in db [:accounts/login :processing] false)]
       (log/debug "Logged in account: " result)
       (merge
-        {:db (if success db' (assoc-in db' [:accounts/login :error] error))}
-        (when success
-          (let [is-login-screen? (= (:view-id db) :login)
-                new-account?     (not is-login-screen?)]
-            (log/debug "Logged in: " (:view-id db) is-login-screen? new-account?)
-            {::clear-web-data nil
-             ::change-account [address new-account?]}))))))
+       {:db (if success db' (assoc-in db' [:accounts/login :error] error))}
+       (when success
+         (let [is-login-screen? (= (:view-id db) :login)
+               new-account?     (not is-login-screen?)]
+           (log/debug "Logged in: " (:view-id db) is-login-screen? new-account?)
+           {::clear-web-data nil
+            ::change-account [address new-account?]}))))))
 
 (register-handler-fx
   :change-account-handler
@@ -122,6 +123,6 @@
                     [:initialize-account address]
                     [:navigate-to-clean :chat-list]
                     (if new-account?
-                      [:navigate-to-chat console-chat-id]
+                      (into [[:navigate-to-chat console-chat-id]] sign-up/start-signup-events)
                       [:navigate-to :chat-list])]}
       (log/debug "Error changing acount: " error))))
